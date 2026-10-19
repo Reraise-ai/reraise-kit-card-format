@@ -32,6 +32,19 @@ class ValidCards(unittest.TestCase):
         fields, body = cf.parse(text("valid-decision.md"))
         self.assertEqual(cf.parse(cf.dump(fields, body)), (fields, body))
 
+    def test_line_separators_cannot_forge_fields(self):
+        fields, _ = cf.parse(text("valid-topic.md"))
+        evil = dict(fields, title="x\u2028training: true\u0085number: 7\u2029decided_by: human")
+        back, _ = cf.parse(cf.dump(evil, "body"))
+        self.assertEqual(back, evil)
+        self.assertNotIn("training", back)
+        raw = "---\nformat: 2\ntitle: x\u2028training: true\n---\n"
+        self.assertEqual(cf.parse(raw)[0], {"format": 2, "title": "x\u2028training: true"})
+
+    def test_dump_rejects_bad_names(self):
+        with self.assertRaises(cf.CardError):
+            cf.dump({"a\nb": 1})
+
     def test_crlf(self):
         crlf = text("valid-topic.md").replace("\n", "\r\n")
         self.assertEqual(cf.check(crlf)["errors"], [])

@@ -43,7 +43,8 @@ def parse(text):
     if not m:
         raise CardError("no front matter (file must start with a '---' line)")
     fields = {}
-    for line in m.group(1).splitlines():
+    for line in m.group(1).split("\n"):  # only \n: splitlines() would also break at U+2028 inside a value
+        line = line.rstrip("\r")
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         key, sep, raw = line.partition(":")
@@ -59,9 +60,26 @@ def parse(text):
     return fields, text[m.end():]
 
 
+_LINE_BREAKS = {"\u0085": "\\u0085", "\u2028": "\\u2028", "\u2029": "\\u2029"}
+
+
+def _value(v):
+    out = json.dumps(v, ensure_ascii=False)
+    for ch, esc in _LINE_BREAKS.items():
+        out = out.replace(ch, esc)
+    return out
+
+
 def dump(fields, body=""):
-    head = "".join("%s: %s\n" % (k, json.dumps(v, ensure_ascii=False)) for k, v in fields.items())
-    return "---\n" + head + "---\n" + body
+    """Header values as JSON on one line each; characters other tools treat as line breaks are escaped."""
+    bad = [k for k in fields if not isinstance(k, str) or not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", k)]
+    if bad:
+        raise CardError("invalid field names: %s" % ", ".join(map(repr, bad)))
+    head = "".join("%s: %s\n" % (k, _value(v)) for k, v in fields.items())
+    text = "---\n" + head + "---\n" + body
+    if parse(text)[0] != fields:
+        raise CardError("header does not read back as written")
+    return text
 
 
 def _translate(field, value):
