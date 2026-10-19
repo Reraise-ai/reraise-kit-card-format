@@ -58,6 +58,22 @@ class InvalidCards(unittest.TestCase):
         self.assertEqual(cf.validate(dict(ok, decided_by="human", decided_quote="Yes, A.", decided_ref="chat:s@t")), [])
         self.assertTrue(cf.validate(dict(ok, number=3)))
 
+    def test_agent_is_never_decider(self):
+        base = {"format": 2, "id": "B-1", "type": "proposal", "title": "t", "created_by": "agent:a", "date": "2026-10-05",
+                "language": "en", "release": "private", "question": "q?", "proposed_by": "agent:a",
+                "decided_quote": "ok", "decided_ref": "r"}
+        self.assertTrue(cf.validate(dict(base, decided_by="agent:keeper")))
+        self.assertEqual(cf.validate(dict(base, decided_by="human")), [])
+
+    def test_calendar_date_and_empty_source(self):
+        fields, _ = cf.parse(text("valid-topic.md"))
+        self.assertIn("calendar", " ".join(cf.validate(dict(fields, date="2026-13-45"))))
+        self.assertTrue(cf.validate(dict(fields, source="")))
+
+    def test_duplicate_field(self):
+        with self.assertRaisesRegex(cf.CardError, "twice"):
+            cf.parse("---\nformat: 2\nformat: 3\n---\n")
+
     def test_no_front_matter(self):
         with self.assertRaises(cf.CardError):
             cf.check("# just text\n")

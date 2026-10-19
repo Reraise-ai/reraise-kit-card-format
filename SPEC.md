@@ -24,6 +24,8 @@ The contract can be cancelled with three months' notice.
 ```
 
 - One field per line: `name: value`. Values are JSON: text in double quotes, lists in square brackets, numbers and `true`/`false` as is.
+  A value that is not valid JSON is read as plain text. A field may appear only once.
+  Values spread over several lines (YAML style) are not supported; such a card cannot be read.
 - File name: a short readable name. Decision cards: `E-<number>_<short-name>.md`.
 
 ## Fields every newly written card must have
@@ -62,7 +64,7 @@ A decision is something a human decided. It is only a decision card if the human
 | `question`, `choice` | the question and what was chosen | yes |
 | `options` | the possibilities | no |
 | `decision_type` | `decision`, `revision`, `postponed`, `delegated` | yes |
-| `decided_by` | the human who decided | yes |
+| `decided_by` | the human who decided (`human` or a name; never `agent:...`) | yes |
 | `decided_quote` | the human's sentence, word for word | yes |
 | `decided_ref` | where the sentence was said: channel, session, time | yes |
 | `captured_by` | the agent that wrote the card, preferably `agent:<name>` | yes |

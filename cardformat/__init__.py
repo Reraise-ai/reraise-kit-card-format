@@ -1,4 +1,5 @@
 """Card format v2: parse, read rule for legacy field names, validation against card-v2.schema.json."""
+import datetime
 import json
 import os
 import re
@@ -49,6 +50,8 @@ def parse(text):
         if not sep or not key.strip():
             raise CardError("front matter line is not 'key: value': %r" % line[:80])
         raw = raw.strip()
+        if key.strip() in fields:
+            raise CardError("field %r appears twice in the header" % key.strip())
         try:
             fields[key.strip()] = json.loads(raw)
         except ValueError:
@@ -99,6 +102,13 @@ def normalize(fields):
 def validate(fields, strict=False):
     """Errors of canonical fields against the schema. strict=True (for writing) also rejects legacy field names."""
     errors = []
+    for k in ("date", "review_date"):
+        v = fields.get(k)
+        if isinstance(v, str) and re.match(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$", v):
+            try:
+                datetime.date.fromisoformat(v)
+            except ValueError:
+                errors.append("%s: %r is not a calendar date" % (k, v))
     for e in sorted(_VALIDATOR.iter_errors(fields), key=lambda e: list(e.path)):
         where = ".".join(str(p) for p in e.path)
         errors.append(("%s: %s" % (where, e.message)) if where else e.message)
