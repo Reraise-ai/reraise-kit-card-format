@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Card format v2 (with reraise-kit extension fields)",
+  "description": "Front matter of a card as written by a component. See SPEC.md. Unknown fields are allowed: v2 only adds.",
+  "type": "object",
+  "required": ["format", "id", "type", "title", "created_by", "date", "language", "release"],
+  "properties": {
+    "format": {"const": 2},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "type": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "title": {"type": "string", "pattern": "\\S"},
+    "created_by": {"type": "string", "pattern": "^(human|agent:[A-Za-z0-9._-]+)$"},
+    "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "language": {"type": "string", "pattern": "^[a-z]{2,3}(-[A-Za-z]{2,4})?$"},
+    "release": {"enum": ["private", "community", "commercial"]},
+    "source": {"type": ["string", "object"]},
+    "sourceChecksum": {"type": "string"},
+    "layer": {"enum": ["evidenced", "said", "experience"]},
+    "originSystem": {"type": "string"},
+    "worlds": {"type": "array"},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "edges": {"type": "array"},
+    "training": {"type": "boolean"},
+    "number": {"type": "integer", "minimum": 1},
+    "question": {"type": "string", "pattern": "\\S"},
+    "options": {"type": "array", "items": {"type": "string"}},
+    "choice": {"type": "string", "pattern": "\\S"},
+    "decision_type": {"enum": ["decision", "revision", "postponed", "delegated"]},
+    "expected_outcome": {"type": "string"},
+    "review_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "actual_outcome": {"type": ["string", "null"]},
+    "hit": {"type": ["boolean", "null"]},
+    "decided_by": {"type": "string", "pattern": "\\S", "not": {"enum": ["none", "agent"]}},
+    "decided_quote": {"type": "string", "pattern": "\\S"},
+    "decided_ref": {"type": "string", "pattern": "\\S"},
+    "captured_by": {"type": "string", "pattern": "\\S"},
+    "proposed_by": {"type": "string", "pattern": "^agent:[A-Za-z0-9._-]+$"},
+    "guardrails": {"type": "array"}
+  },
+  "dependencies": {
+    "decided_by": ["decided_quote", "decided_ref"],
+    "decided_quote": ["decided_by"],
+    "decided_ref": ["decided_by"]
+  },
+  "not": {"anyOf": [{"required": ["level"]}, {"required": ["signature"]}]},
+  "allOf": [
+    {
+      "if": {"properties": {"layer": {"enum": ["evidenced", "said"]}}, "required": ["layer"]},
+      "then": {"required": ["source"]}
+    },
+    {
+      "if": {"properties": {"type": {"const": "decision"}}, "required": ["type"]},
+      "then": {"required": ["number", "question", "choice", "decision_type", "decided_by", "decided_quote", "decided_ref", "captured_by"]}
+    },
+    {
+      "if": {"properties": {"type": {"const": "proposal"}}, "required": ["type"]},
+      "then": {"required": ["proposed_by", "question"], "not": {"required": ["number"]}}
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reraise-kit-card-format"
+version = "0.1.0"
+description = "Card format v2: specification, JSON Schema, read rule for legacy field names, validator"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+dependencies = ["jsonschema>=3.2"]
+
+[project.scripts]
+cardformat = "cardformat.__main__:main"
+
+[tool.setuptools]
+packages = ["cardformat"]
+
+[tool.setuptools.package-data]
+cardformat = ["card-v2.schema.json"]
