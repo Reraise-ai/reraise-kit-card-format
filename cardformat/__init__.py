@@ -72,7 +72,7 @@ def _value(v):
 
 def dump(fields, body=""):
     """Header values as JSON on one line each; characters other tools treat as line breaks are escaped."""
-    bad = [k for k in fields if not isinstance(k, str) or not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", k)]
+    bad = [k for k in fields if not isinstance(k, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", k)]
     if bad:
         raise CardError("invalid field names: %s" % ", ".join(map(repr, bad)))
     head = "".join("%s: %s\n" % (k, _value(v)) for k, v in fields.items())
