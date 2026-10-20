@@ -107,7 +107,7 @@ class LegacyNames(unittest.TestCase):
         cf.read_card(card("legacy-german.md"))
         self.assertEqual(text("legacy-german.md", "rb"), before)
 
-    def test_author_from_decision_loop(self):
+    def test_legacy_author_field(self):
         f, notes = cf.normalize({"author": "human"})
         self.assertEqual(f, {"created_by": "human"})
 
